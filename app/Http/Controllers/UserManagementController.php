@@ -12,7 +12,7 @@ class UserManagementController extends Controller
     /** Daftar semua pengguna. */
     public function index()
     {
-        $users = User::orderByRaw("FIELD(role, 'super_admin', 'department_head', 'team_leader')")
+        $users = User::orderByRaw("CASE role WHEN 'super_admin' THEN 0 WHEN 'department_head' THEN 1 WHEN 'team_leader' THEN 2 ELSE 3 END")
             ->orderBy('name')
             ->get();
 
