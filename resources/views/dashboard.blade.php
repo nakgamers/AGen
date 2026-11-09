@@ -20,6 +20,13 @@
         /* Tabel surat terbaru: baris lebih lega */
         .dash-letters thead th { padding-top:0.75rem; padding-bottom:0.75rem; padding-right:1rem; }
         .dash-letters tbody td { padding-top:1rem; padding-bottom:1rem; padding-right:1rem; }
+        /* Kartu notifikasi */
+        .dash-notif { border-left:4px solid #4f46e5; }
+        .dash-notif-head { display:flex; justify-content:space-between; align-items:center; gap:0.75rem; flex-wrap:wrap; margin-bottom:0.75rem; }
+        .dash-notif-badge { display:inline-block; background-color:#dc2626; color:#ffffff; border-radius:9999px; padding:0 0.5rem; font-size:0.7rem; line-height:1.15rem; margin-left:0.5rem; }
+        .dash-notif-item { background:#eef2ff; border:1px solid #c7d2fe; border-radius:0.375rem; padding:0.625rem 0.875rem; margin-bottom:0.5rem; }
+        .dash-notif-item:last-child { margin-bottom:0; }
+        .dash-notif-btn { background-color:#1f2937; color:#ffffff; border:none; border-radius:0.375rem; padding:0.375rem 0.75rem; font-size:0.8125rem; cursor:pointer; }
         @media (max-width: 900px) { .dash-stats, .dash-stats-3 { grid-template-columns:repeat(2, 1fr); } .dash-charts { grid-template-columns:1fr; } }
     </style>
 
@@ -31,6 +38,64 @@
                 <h3 class="text-lg font-semibold text-gray-800">Selamat datang, {{ $namaPengguna }} 👋</h3>
                 <p class="text-sm text-gray-500">{{ $tanggalHariIni }} · {{ auth()->user()->roleLabel() }} · Bank Jakarta — Unit SAM / WOLSAM</p>
             </div>
+
+                        {{-- Permintaan reset password (khusus super admin) --}}
+            @php
+                $isSuperAdmin = auth()->user()->role === 'super_admin';
+                $permintaanReset = $isSuperAdmin
+                    ? \App\Models\PasswordResetRequest::with('user')->where('status', 'pending')->latest()->get()
+                    : collect();
+            @endphp
+
+            @if(session('temp_password'))
+                <div class="dash-card" style="margin-bottom:1.5rem; border-left:4px solid #059669; background-color:#ecfdf5;">
+                    <p class="text-sm font-semibold" style="color:#065f46;">Password sementara untuk {{ session('temp_user') }}</p>
+                    <p style="font-family:monospace; font-size:1.375rem; font-weight:700; color:#065f46; margin:0.25rem 0;">{{ session('temp_password') }}</p>
+                    <p class="text-xs" style="color:#047857;">Catat dan sampaikan ke yang bersangkutan lewat saluran yang aman. Password ini hanya tampil sekali dan hilang saat halaman dimuat ulang.</p>
+                </div>
+            @endif
+
+            @if($permintaanReset->isNotEmpty())
+                <div class="dash-card dash-notif" style="margin-bottom:1.5rem;">
+                    <div class="dash-notif-head">
+                        <h3 class="text-sm font-semibold text-gray-700">
+                            Permintaan Reset Password
+                            <span class="dash-notif-badge">{{ $permintaanReset->count() }}</span>
+                        </h3>
+                    </div>
+
+                    @foreach($permintaanReset as $req)
+                        <div class="dash-notif-item" style="display:flex; justify-content:space-between; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+                            <div>
+                                <div class="text-sm font-semibold text-gray-800">{{ $req->user->name }}</div>
+                                <div class="text-sm text-gray-600">{{ $req->user->email }}</div>
+                                <div class="text-xs text-gray-400" style="margin-top:0.125rem;">Diminta {{ $req->created_at->format('d M Y H:i') }}</div>
+                            </div>
+
+                            <div style="display:flex; gap:0.5rem;">
+                                <form action="{{ route('password-requests.approve', $req->id) }}" method="POST" class="form-konfirmasi" data-pesan="Buat password sementara untuk {{ $req->user->name }}? Password lamanya akan diganti.">
+                                    @csrf
+                                    <button type="submit" class="dash-notif-btn" style="background-color:#4f46e5;">Buat Password Sementara</button>
+                                </form>
+                                <form action="{{ route('password-requests.reject', $req->id) }}" method="POST" class="form-konfirmasi" data-pesan="Tolak permintaan dari {{ $req->user->name }}?">
+                                    @csrf
+                                    <button type="submit" class="dash-notif-btn" style="background-color:#e5e7eb; color:#374151;">Tolak</button>
+                                </form>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                <script>
+                    document.querySelectorAll('.form-konfirmasi').forEach(function (form) {
+                        form.addEventListener('submit', function (e) {
+                            if (!confirm(form.dataset.pesan)) {
+                                e.preventDefault();
+                            }
+                        });
+                    });
+                </script>
+            @endif
 
             @if($mode !== 'welcome')
 
@@ -166,23 +231,35 @@
         </div>
     </div>
 
-    @if($mode !== 'welcome')
+       @if($mode !== 'welcome')
+    <div id="chartData" style="display:none;"
+         data-tren-labels="{{ json_encode($trenLabels) }}"
+         data-tren-values="{{ json_encode($trenValues) }}"
+         data-dist-labels="{{ json_encode($distribusi->pluck('name')->values()) }}"
+         data-dist-values="{{ json_encode($distribusi->pluck('total')->values()) }}"></div>
+
     <script src="{{ asset('vendor/chart.umd.min.js') }}"></script>
     <script>
-        const trenLabels = @json($trenLabels);
-        const trenValues = @json($trenValues);
-        new Chart(document.getElementById('chartTren'), {
-            type: 'bar',
-            data: { labels: trenLabels, datasets: [{ label: 'Surat terbit', data: trenValues, backgroundColor: '#4f46e5', borderRadius: 4 }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
-        });
-        const distLabels = @json($distribusi->pluck('name'));
-        const distValues = @json($distribusi->pluck('total'));
-        new Chart(document.getElementById('chartDistribusi'), {
-            type: 'doughnut',
-            data: { labels: distLabels, datasets: [{ data: distValues, backgroundColor: ['#4f46e5','#7c3aed','#059669','#0d9488','#d97706','#dc2626','#2563eb','#db2777','#65a30d'] }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } } }
-        });
+        (function () {
+            var d = document.getElementById('chartData').dataset;
+
+            var trenLabels = JSON.parse(d.trenLabels);
+            var trenValues = JSON.parse(d.trenValues);
+            var distLabels = JSON.parse(d.distLabels);
+            var distValues = JSON.parse(d.distValues);
+
+            new Chart(document.getElementById('chartTren'), {
+                type: 'bar',
+                data: { labels: trenLabels, datasets: [{ label: 'Surat terbit', data: trenValues, backgroundColor: '#4f46e5', borderRadius: 4 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+            });
+
+            new Chart(document.getElementById('chartDistribusi'), {
+                type: 'doughnut',
+                data: { labels: distLabels, datasets: [{ data: distValues, backgroundColor: ['#4f46e5','#7c3aed','#059669','#0d9488','#d97706','#dc2626','#2563eb','#db2777','#65a30d'] }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } } }
+            });
+        })();
     </script>
     @endif
 </x-app-layout>

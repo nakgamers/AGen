@@ -56,3 +56,7 @@ Route::middleware('auth')->group(function () {
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
 });
+
+  Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
+      ->middleware('throttle:5,1')
+      ->name('password.email');
