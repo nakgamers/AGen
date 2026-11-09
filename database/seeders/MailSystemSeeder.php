@@ -6,15 +6,16 @@ use Illuminate\Database\Seeder;
 use App\Models\LetterType;
 use App\Models\LetterTemplate;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class MailSystemSeeder extends Seeder
-{
+    {
     public function run(): void
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        Schema::disableForeignKeyConstraints();
         LetterTemplate::truncate();
         LetterType::truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        Schema::enableForeignKeyConstraints();
 
         // ====================================================================
         // 1. SURAT PEMBERITAHUAN KEWAJIBAN (SPKP)
