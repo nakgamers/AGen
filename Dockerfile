@@ -18,6 +18,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && a2enmod rewrite \
  && rm -rf /var/lib/apt/lists/*
 
+# Laravel's public/.htaccess must be honored so routes like /login rewrite to index.php
+RUN printf '<Directory /var/www/html/public>\n\tAllowOverride All\n\tRequire all granted\n</Directory>\n' > /etc/apache2/conf-available/laravel.conf \
+ && a2enconf laravel
+
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/000-default.conf \
  && sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
