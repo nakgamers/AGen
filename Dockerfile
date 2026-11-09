@@ -12,7 +12,7 @@ RUN npm run build
 FROM php:8.3-apache
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    git unzip libzip-dev libpng-dev libjpeg-dev libfreetype6-dev libicu-dev supervisor \
+    git unzip libsqlite3-dev libzip-dev libpng-dev libjpeg-dev libfreetype6-dev libicu-dev supervisor \
  && docker-php-ext-configure gd --with-freetype --with-jpeg \
  && docker-php-ext-install -j$(nproc) pdo_sqlite bcmath gd intl zip exif \
  && a2enmod rewrite \
