@@ -37,7 +37,9 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction \
 
 COPY docker/supervisord.conf /etc/supervisor/conf.d/app.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+COPY docker/backup-db.php /usr/local/bin/backup-db.php
+COPY docker/backup-db.sh /usr/local/bin/backup-db.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/backup-db.sh
 
 EXPOSE 10000
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
