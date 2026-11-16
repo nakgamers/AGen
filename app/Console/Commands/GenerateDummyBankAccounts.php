@@ -23,7 +23,7 @@ class GenerateDummyBankAccounts extends Command
         // Tulis Header (sesuai dengan heading row pada BankAccountImport.php)
         fputcsv($file, [
             'NO REKENING', 'NAMA NASABAH', 'NOA SAAT INI', 'SEGMEN', 'RM PENGELOLA', 
-            'CABANG', 'KC CABANG', 'BANK', 'TUNGGAKAN POKOK', 'TUNGGAKAN BUNGA', 
+            'CABANG', 'KC CABANG', 'BANK', 'PERIODE HB', 'TUNGGAKAN POKOK', 'TUNGGAKAN BUNGA',
             'DENDA', 'ALAMAT TAGIH', 'KOTA ALAMAT TAGIH', 'AGUNAN FA', 'RINCIAN AGUNAN', 
             'KELURAHAN AGUNAN', 'KECAMATAN AGUNAN', 'KOTA AGUNAN', 'PROVINSI AGUNAN', 'KETERANGAN'
         ]);
@@ -50,12 +50,11 @@ class GenerateDummyBankAccounts extends Command
             $isInvalidRow = $faker->boolean(5); 
 
             if ($isInvalidRow) {
-                $errorType = $faker->numberBetween(1, 3);
+                $errorType = $faker->numberBetween(1, 2);
                 
                 $noRekening = match($errorType) {
                     1 => '', // Kosong (melanggar aturan required)
-                    2 => 'ABCDE99999', // Mengandung huruf (melanggar aturan numeric)
-                    3 => '123', // Terlalu pendek
+                    2 => 'ABCDE99999', // Mengandung huruf (melanggar aturan angka saja)
                 };
                 
                 $bank = 'BANK_GAGAL_VALIDASI'; // Melanggar Rule::in bank
@@ -63,7 +62,7 @@ class GenerateDummyBankAccounts extends Command
                 $namaNasabah = ''; // Kosong
             } else {
                 // Data normal / valid
-                $noRekening = $faker->numberBetween(1000000000, 9999999999);
+                $noRekening = str_pad((string) $faker->numberBetween(0, 9999999999), 10, '0', STR_PAD_LEFT);
                 $bank = $faker->randomElement($banks);
                 $segmen = $faker->randomElement($segments);
                 $namaNasabah = $faker->name;
@@ -83,6 +82,7 @@ class GenerateDummyBankAccounts extends Command
                 'KCP ' . $faker->citySuffix,
                 'KCU ' . $faker->city,
                 $bank,
+                now()->format('Y-m'),
                 $tunggakanPokok,
                 $tunggakanBunga,
                 $denda,

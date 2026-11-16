@@ -4,14 +4,13 @@
     <meta charset="UTF-8">
     <title>Surat - {{ $letter->letter_number }}</title>
     <style>
-        /* 1. Atur Ukuran Kertas ke Letter dan Perkecil Margin */
+        /* Gunakan A4 dengan margin yang konsisten pada preview dan PDF. */
         @page {
-            size: letter; 
-            /* Atas, Kanan, Bawah, Kiri. Untuk PDF disamakan dengan padding .letter-body di preview (15mm 20mm) */
-            margin: @if(isset($isPdf)) 15mm 20mm 15mm 20mm @else 10mm 15mm 10mm 15mm @endif;
+            size: A4;
+            margin: 15mm 20mm;
         }
 
-        /* 2. Perkecil Font dan Line Height agar lebih padat */
+        /* Perkecil font dan line height agar isi surat tetap ringkas. */
         body {
             font-family: Arial, Helvetica, sans-serif;
             font-size: 9.5pt; /* Lebih kecil dari sebelumnya (10pt) */
@@ -22,11 +21,11 @@
             background-color: #f9fafb;
         }
 
-        /* 3. Sesuaikan ukuran kanvas preview Web dengan ukuran Letter */
+        /* Kanvas preview mengikuti dimensi fisik kertas A4. */
         .letter-body {
             background-color: #ffffff;
-            width: 215.9mm; /* Lebar kertas Letter */
-            min-height: 279.4mm; /* Tinggi kertas Letter */
+            width: 210mm;
+            min-height: 297mm;
             margin: 0 auto;
             padding: 15mm 20mm;
             box-sizing: border-box;
@@ -61,8 +60,7 @@
         }
 
         @if(isset($isPdf))
-        /* Khusus DomPDF: tidak mendukung box-sizing, sehingga width 215.9mm + padding
-           membuat isi melebar melewati tepi kertas. Margin halaman sudah diatur lewat @page. */
+        /* Margin halaman sudah diatur lewat @page, jadi wrapper PDF tidak perlu padding. */
 
         body { background-color: #ffffff; }
         .letter-body {
@@ -78,7 +76,7 @@
             body { background-color: #ffffff; }
             .letter-body {
                 width: 100%;
-                min-height: 100%;
+                min-height: 0;
                 padding: 0;
                 box-shadow: none;
             }
@@ -90,8 +88,8 @@
                 padding: 0 !important;
             }
             @page {
-                size: letter;
-                margin: @if(isset($isPdf)) 15mm 20mm 15mm 20mm @else 10mm 15mm 10mm 15mm @endif;
+                size: A4;
+                margin: 15mm 20mm;
             }
         }
     </style>
@@ -103,7 +101,7 @@
         <span class="title">Preview Surat: {{ $letter->letter_number }}</span>
         <div class="btn-group">
             <a href="{{ route('letters.create') }}" class="btn btn-back">← Kembali</a>
-            <button onclick="window.print()" class="btn btn-print">Cetak Langsung</button>
+            <button type="button" onclick="window.print()" class="btn btn-print">Cetak</button>
             <a href="{{ route('letters.export-pdf', $letter->id) }}" class="btn btn-download">Download PDF</a>
         </div>
     </div>
@@ -112,6 +110,28 @@
     <div class="letter-body content">
         {!! $content !!}
     </div>
+
+    @if(!isset($isPdf))
+    <script>
+        let originalLetterZoom = '';
+
+        window.addEventListener('beforeprint', () => {
+            const letter = document.querySelector('.letter-body');
+            if (!letter) return;
+
+            originalLetterZoom = letter.style.zoom;
+            letter.style.zoom = '1';
+            const printableHeight = (297 - 30) * 96 / 25.4;
+            const scale = Math.min(1, printableHeight / letter.scrollHeight);
+            letter.style.zoom = String(scale);
+        });
+
+        window.addEventListener('afterprint', () => {
+            const letter = document.querySelector('.letter-body');
+            if (letter) letter.style.zoom = originalLetterZoom;
+        });
+    </script>
+    @endif
 
 </body>
 </html>

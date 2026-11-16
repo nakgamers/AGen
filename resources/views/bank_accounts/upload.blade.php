@@ -84,7 +84,7 @@
                         </div>
 
                         <details class="up-details">
-                            <summary>Lihat daftar kolom (20 kolom)</summary>
+                            <summary>Lihat daftar kolom (21 kolom)</summary>
                             <div class="up-chips" id="column_chips"></div>
                         </details>
                     </div>
@@ -175,7 +175,7 @@
 
             var COLUMNS = [
                 'NO REKENING', 'NAMA NASABAH', 'NOA SAAT INI', 'SEGMEN', 'RM PENGELOLA',
-                'CABANG', 'KC CABANG', 'BANK', 'TUNGGAKAN POKOK', 'TUNGGAKAN BUNGA',
+                'CABANG', 'KC CABANG', 'BANK', 'PERIODE HB', 'TUNGGAKAN POKOK', 'TUNGGAKAN BUNGA',
                 'DENDA', 'ALAMAT TAGIH', 'KOTA ALAMAT TAGIH', 'AGUNAN FA', 'RINCIAN AGUNAN',
                 'KELURAHAN AGUNAN', 'KECAMATAN AGUNAN', 'KOTA AGUNAN', 'PROVINSI AGUNAN', 'KETERANGAN'
             ];

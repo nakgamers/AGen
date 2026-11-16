@@ -663,7 +663,13 @@ class LetterController extends Controller
             'isPdf'   => true,
         ]);
 
-        $pdf->setPaper('letter', 'portrait');
+        $pdf->setPaper('A4', 'portrait');
+        $pdf->render();
+
+        if ($pdf->getDomPDF()->getCanvas()->get_page_count() !== 1) {
+            abort(422, 'Isi surat melebihi satu halaman A4. Kurangi jumlah rincian atau panjang teks, lalu buat PDF kembali.');
+        }
+
         $filename = 'Surat_Kewajiban_' . str_replace('/', '_', $letter->letter_number) . '.pdf';
 
         return $pdf->download($filename);
